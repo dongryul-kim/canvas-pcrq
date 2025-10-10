@@ -1,0 +1,13 @@
+{
+  "name": "Canvas PCRQ",
+  "description": "Hacky extension for facilitating Canvas PCRQ grading",
+  "version": "0.1",
+  "manifest_version": 3,
+  "content_scripts": [
+    {
+      "matches": ["https://canvas.stanford.edu/*"],
+      "js": ["script.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
