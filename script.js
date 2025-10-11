@@ -6,6 +6,7 @@ let iframe;
 let iframe_body;
 
 if (location.href.includes('/gradebook/speed_grader')) {
+  insert_help();
   main();
   document.addEventListener('keydown', hotkeys);
 }
@@ -36,6 +37,7 @@ async function process_iframe() {
   // Hiding certain elements
   input_to_grade.length = 0;
   hidden_elems.length = 0;
+  hide_elems(document, 'div:has(>form#add_a_comment)');
   hide_elems(iframe_body, 'div.alert');
   hide_elems(iframe_body, 'div.quiz_score');
   hide_elems(iframe_body, 'div.quiz_duration');
@@ -59,6 +61,18 @@ function hide_elems(elem, selector) {
     hidden_elems.push(s);
     s.style.display = 'none';
   }
+}
+
+function insert_help() {
+  const table = `<table id="pcrq-help" style="margin: 0 auto; border-collapse: separate; border-spacing: 1em 0; text-align: center;">
+    <tr><th>Key</th><th>Function</th></tr>
+    <tr><td>z</td><td>Gives full marks</td></tr>
+    <tr><td>x</td><td>Gives zero points</td></tr>
+    <tr><td>&larr;</td><td>Previous student</td></tr>
+    <tr><td>&rarr;</td><td>Next student</td></tr>
+    <tr><td>s</td><td>Shows all elements</td></tr>
+    </table>`;
+  document.querySelector('div#rightside_inner').innerHTML += table;
 }
 
 function hotkeys(e) {
