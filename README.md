@@ -9,8 +9,8 @@ unnecessary elements and creates hotkeys.
 |:-:|---|
 | z | Gives full marks to all ungraded questions and saves it |
 | x | Gives zero points to all ungraded questions and saves it |
-| <- | Select previous student |
-| -> | Select next student |
+| &larr; | Select previous student |
+| &rarr; | Select next student |
 | s | Shows all hidden elements |
 
 ## Stability
