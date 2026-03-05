@@ -32,11 +32,20 @@ function getIframeBody() {
 }
 
 function waitForIframeAndProcess() {
+  let attempts = 0;
+  const maxAttempts = 30; // 3 seconds max wait
+
   const checkAndProcess = () => {
     const body = getIframeBody();
+    attempts++;
+
     if (body && body.querySelector('div#questions')) {
       processQuestions();
       attachIframeKeyListener();
+    } else if (attempts >= maxAttempts) {
+      // No questions found after timeout - likely no submission, skip to next
+      showFeedback('No submission, skipping...', 'info');
+      navigateStudent('next');
     } else {
       setTimeout(checkAndProcess, 100);
     }
