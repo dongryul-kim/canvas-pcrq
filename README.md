@@ -11,6 +11,7 @@ unnecessary elements and creates hotkeys.
 | x | Gives zero points to all ungraded questions and saves it |
 | &larr; | Select previous student |
 | &rarr; | Select next student |
+| h | Hides all hidden elements |
 | s | Shows all hidden elements |
 
 ## Stability

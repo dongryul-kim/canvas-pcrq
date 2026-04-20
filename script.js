@@ -1,66 +1,40 @@
-
 const polling_interval = 30;
-const input_to_grade = []; // stores pairs of (hidden_input, total_pts)
-const hidden_elems = [];
-let iframe;
-let iframe_body;
 
 if (location.href.includes('/gradebook/speed_grader')) {
   insert_help();
-  main();
+  inject_styles();
   document.addEventListener('keydown', hotkeys);
 }
 
-async function main() {
-  await get_iframe();
-  await process_iframe();
-}
-
-async function get_iframe() {
+async function inject_styles() {
+  if (!document.querySelector('style#pcrq')) {
+    const style = document.createElement('style');
+    style.id = 'pcrq';
+    style.textContent = `div#flash_message_holder,
+      div#submission_not_newest_notice, div:has(>form#add_a_comment),
+      div#submission_details, div.secondary_mount_point_container { display:
+      none; }`;
+    document.head.appendChild(style);
+  }
+  let iframe;
   while (true) {
     await new Promise(_ => setTimeout(_, polling_interval));
     iframe = document.querySelector('iframe#speedgrader_iframe');
-    if (iframe !== null) break;
+    if (iframe) iframe.style.display = 'none';
+    if (iframe && iframe.contentDocument && iframe.contentDocument.head &&
+      iframe.contentDocument.querySelector('div#questions')) break;
   }
-}
-
-async function process_iframe() {
-  // Wating for iframe to load
-  while (true) {
-    await new Promise(_ => setTimeout(_, polling_interval));
-    if (iframe.contentWindow === null) continue;
-    iframe_body = iframe.contentWindow.document.body;
-    if (iframe_body === null) continue;
-    if (iframe_body.querySelector('div#questions') === null) continue;
-    break;
+  if (!iframe.contentDocument.querySelector('style#pcrq')) {
+    const style = document.createElement('style');
+    style.id = 'pcrq';
+    style.textContent = `div.alert, div.quiz_score, div.quiz_duration,
+      div.question_text, div.quiz_comment, div.update_scores_fudge { display:
+      none; } div[aria-label="Question"] { display: none; }
+      div[aria-label="Question"]:has(input.question_input_hidden[value=""]) {
+      display: block; }`;
+    iframe.contentDocument.head.appendChild(style);
   }
-  // Hiding certain elements
-  input_to_grade.length = 0;
-  hidden_elems.length = 0;
-  hide_elems(document, 'div:has(>form#add_a_comment)');
-  hide_elems(iframe_body, 'div.alert');
-  hide_elems(iframe_body, 'div.quiz_score');
-  hide_elems(iframe_body, 'div.quiz_duration');
-  for (q of iframe_body.querySelectorAll('div[aria-label="Question"]')) {
-    const i = q.querySelector('input.question_input_hidden');
-    if (i.getAttribute('value') === '') {
-      hide_elems(q, 'div.question_text');
-      hide_elems(q, 'div.quiz_comment');
-      const pts = q.querySelector('span.question_points').innerText.substr(2);
-      input_to_grade.push([i, pts]);
-    } else {
-      hidden_elems.push(q);
-      q.style.display = 'none';
-    }
-  }
-}
-
-function hide_elems(elem, selector) {
-  const s = elem.querySelector(selector);
-  if (s !== null) {
-    hidden_elems.push(s);
-    s.style.display = 'none';
-  }
+  iframe.style.display = '';
 }
 
 function insert_help() {
@@ -70,39 +44,50 @@ function insert_help() {
     <tr><td>x</td><td>Gives zero points</td></tr>
     <tr><td>&larr;</td><td>Previous student</td></tr>
     <tr><td>&rarr;</td><td>Next student</td></tr>
+    <tr><td>h</td><td>Hides all elements</td></tr>
     <tr><td>s</td><td>Shows all elements</td></tr>
-    </table>`;
+    </table>
+    <p style="text-align: center;"><a href="https://github.com/dongryul-kim/canvas-pcrq">Link to GitHub repository</a></p>`;
   document.querySelector('div#rightside_inner').innerHTML += table;
 }
 
+function grade(full_score) {
+  const iframe = document.querySelector('iframe#speedgrader_iframe');
+  for (q of iframe.contentDocument.querySelectorAll('div[aria-label="Question"]')) {
+    const i = q.querySelector('input.question_input_hidden');
+    if (i.getAttribute('value') === '') {
+      const pts = q.querySelector('span.question_points').innerText.substr(2);
+      i.setAttribute('value', full_score ? pts : '0');
+    }
+  }
+  iframe.contentDocument.querySelector('button.update-scores').click();
+  iframe.style.display = 'none';
+  iframe.addEventListener('load', inject_styles);
+}
+
 function hotkeys(e) {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
   switch (e.key) {
     case 'z':
-      for (pair of input_to_grade) {
-        pair[0].setAttribute('value', pair[1]);
-      }
-      input_to_grade.length = 0;
+      grade(true);
+      break;
     case 'x':
-      for (pair of input_to_grade) {
-        pair[0].setAttribute('value', '0');
-      }
-      input_to_grade.length = 0;
-      iframe_body.querySelector('button.update-scores').click();
-      if (iframe !== null) iframe.addEventListener('load', main);
+      grade(false);
       break;
     case 'ArrowRight':
       document.querySelector('button#next-student-button').click();
-      main();
+      inject_styles();
       break;
     case 'ArrowLeft':
       document.querySelector('button#prev-student-button').click();
-      main();
+      inject_styles();
+      break;
+    case 'h':
+      inject_styles();
       break;
     case 's':
-      for (e of hidden_elems) {
-        e.style.display = '';
-      }
-      hidden_elems.length = 0;
+      document.querySelector('style#pcrq').remove();
+      document.querySelector('iframe#speedgrader_iframe').contentDocument.querySelector('style#pcrq').remove();
       break;
   }
 }
